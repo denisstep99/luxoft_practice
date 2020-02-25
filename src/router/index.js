@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Chart from "@/components/Chart";
+import SliderWidget from "../components/SliderWidget";
 
 Vue.use(VueRouter);
 
@@ -23,6 +24,10 @@ const routes = [
     path: '/speed',
     component: Chart,
     props: {type: 'speed'}
+  },
+  {
+    path: '/slider',
+    component: SliderWidget,
   },
 ];
 
