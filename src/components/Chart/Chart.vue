@@ -1,7 +1,16 @@
 <template>
     <div>
         <div ref="chart" class="chart">
-            <apexchart height="350" type="line" :options="chartOptions" :series="series"/>
+            <apexchart id="apex" @dataPointMouseLeave="mmw" height="350" type="line" :options="chartOptions" :series="series"/>
+            <v-img :style='{top: y + "px", left: x + "px"}' class='point-image' v-show="tooltip" :src="imageUrl"/>
+            <v-dialog
+                    v-model="dialog"
+                    max-width="60%"
+            >
+                <v-card>
+                    <v-img width="100%" contain src="https://picsum.photos/id/1/690/480"/>
+                </v-card>
+            </v-dialog>
         </div>
         <v-data-table
                 v-model="selectedRows"
@@ -32,7 +41,7 @@
 </template>
 
 <script>
-  import data from '../stabs/items';
+  import data from '../../stabs/items';
 
   const X_AXIS = 'date';
 
@@ -58,21 +67,42 @@
     },
     data() {
       return {
-        chartOptions: {
-          chart: {
-            toolbar: false
-          },
-          xaxis: {
-            type: "datetime",
-            categories: data.map(e => e[X_AXIS])
-          }
-        },
+        dialog: false,
+        x: 0,
+        y: 0,
         series: [
           {
             name: this.type,
             data: data.map(e => e[this.type])
           }
         ],
+        tooltip: false,
+        imagesArray: [],
+        imageUrl: 'https://picsum.photos/30/30?random',
+        chartOptions: {
+          chart: {
+            toolbar: false,
+            events: {
+              dataPointMouseEnter: this.mmm
+            },
+          },
+          xaxis: {
+            type: "datetime",
+            categories: data.map(e => e[X_AXIS])
+          },
+          markers: {
+            size: 10,
+            onClick: (e) => {
+              this.dialog = true;
+              e.stopPropagation()
+            }
+          },
+          tooltip: {
+            intersect: true,
+            shared: false,
+            enabled: false
+          }
+        },
         page: 1,
         selectedRows: [],
         headers: [
@@ -102,11 +132,37 @@
           history.replaceState("", document.title, ' ');
         }
         select(!isSelected)
+      },
+      mmm(e, r, c) {
+        const {x: canvasOffsetX, y: canvasOffsetY} = document.getElementById('apex').getBoundingClientRect();
+        const {x: dotOffsetX, y: dotOffsetY} = e.target.getBoundingClientRect();
+
+        this.x = - canvasOffsetX + dotOffsetX - 5;
+        this.y = - canvasOffsetY + dotOffsetY - 50;
+
+        this.imageUrl = `https://picsum.photos/id/${c.dataPointIndex}/30/30`;
+        if (!this.imagesArray[c.dataPointIndex]) {
+          const img = new Image();
+          img.src = this.imageUrl;
+          this.imagesArray[c.dataPointIndex] = img;
+        }
+        this.tooltip = true;
+      },
+      mmw() {
+        this.tooltip = false
       }
     }
   }
 </script>
 
 <style scoped>
-
+    .point-image{
+        position: absolute;
+        box-shadow:
+                0 2px 2px 0 black,
+                0 0 0 3px #dfe2ee;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+    }
 </style>
