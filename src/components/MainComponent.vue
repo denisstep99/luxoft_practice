@@ -27,15 +27,15 @@
 
 <script>
 
-    export default {
-        name: 'MainComponent',
-        data() {
-            return {
-                tab: null
-            }
-
-        }
-    }
+  export default {
+    name: 'MainComponent',
+    data() {
+      return {
+        tab: null,
+        hash: ''
+      }
+    },
+  }
 
 </script>
 <style scoped>
