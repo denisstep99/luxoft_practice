@@ -8,9 +8,14 @@
         </swiper>
         <swiper :options="swiperOptionThumbs" class="gallery-thumbs" ref="swiperThumbs">
             <swiper-slide v-for="image in images" :key="image.link" class="slide-img">
-                <img :src="image.link" alt="" @mouseover="image.isShown = true"
+                <div class="wrap" @mouseover="image.isShown = true"
                      @mouseleave="image.isShown = false">
-                    <p class="slide-text" v-if="image.isShown" @mouseenter="image.isShown = true">{{image.text}}</p>
+                    <img :src="image.link" alt="">
+                    <transition name="fade">
+                        <p class="slide-text" v-if="image.isShown" @mouseenter="image.isShown = true">{{image.text}}</p>
+                    </transition>
+                </div>
+
             </swiper-slide>
             <div class="swiper-button-next" slot="button-next"/>
             <div class="swiper-button-prev" slot="button-prev"/>
@@ -93,8 +98,10 @@ export default {
         this.$nextTick(() => {
             const swiperTop = this.$refs.swiperTop.swiper;
             const swiperThumbs = this.$refs.swiperThumbs.swiper;
+
             swiperTop.controller.control = swiperThumbs;
             swiperThumbs.controller.control = swiperTop;
+
         });
     },
     methods: {}
@@ -154,12 +161,17 @@ export default {
     }
 
     .fade-enter-active, .fade-leave-active {
-        transition: opacity .2s;
+        transition: opacity 200ms;
     }
 
     .fade-enter, .fade-leave-to /* .fade-leave-active до версии 2.1.8 */
     {
         opacity: 0;
+    }
+
+    .wrap {
+        width: 100%;
+        height: auto;
     }
 
     @media screen and (max-width: 600px) {
