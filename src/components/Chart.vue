@@ -9,28 +9,27 @@
                     :options="chartOptions"
                     :series="series"
             />
-            <v-img
-                    :style='{top: chartIconPosition.y + "px", left: chartIconPosition.x + "px"}'
-                    class='point-image'
-                    v-show="tooltip"
-                    :src="imageUrl"
-            >
-                <template v-slot:placeholder>
-                    <v-row
-                            class="fill-height ma-0"
-                            align="center"
-                            justify="center"
-                    >
-                        <v-progress-circular size="20" indeterminate color="deep-orange lighten-2"></v-progress-circular>
-                    </v-row>
-                </template>
-            </v-img>
             <v-dialog
                     v-model="dialog"
-                    max-width="100vmin"
             >
-                <v-card>
-                    <v-img contain :src="mainImageUrl"/>
+                <v-card
+                        @click="dialog = false"
+                        max-height="90vh"
+                        style="background-color: black"
+                >
+                    <v-img
+                            class="white--text align-end"
+                            :src="mainImageUrl"
+                            contain
+                            max-height="90vh"
+                    >
+                        <v-card-title style="background-color: rgba(0, 0, 0, 0.38)">Top 10 Australian beaches</v-card-title>
+                        <v-card-text  style="background-color: rgba(0, 0, 0, 0.38)" class="text--primary">
+                            <div class="white--text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deleniti, eligendi!</div>
+
+                            <div class="white--text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid expedita ipsam molestias nostrum obcaecati officia pariatur quibusdam rem soluta voluptatem!</div>
+                        </v-card-text>
+                    </v-img>
                 </v-card>
             </v-dialog>
         </div>
@@ -96,12 +95,9 @@
 
     data() {
       return {
-        imageUrl: '',
         mainImageUrl: 'https://picsum.photos/id/0/680/490',
         dialog: false,
-        tooltip: false,
         page: 1,
-        chartIconPosition: {x: 0, y: 0},
         imagesArray: [],
         selectedRows: [],
         globalData: data,
@@ -132,7 +128,8 @@
           tooltip: {
             intersect: true,
             shared: false,
-            enabled: false
+            enabled: true,
+            custom: this.constructTooltip
           }
         },
         headers: [
@@ -168,15 +165,7 @@
       },
 
       chartPointMouseEnter(event, r, currentState) {
-        const ICON_WIDTH = 10, ICON_BOTTOM_OFFSET = 50;
-        const {x: canvasOffsetX, y: canvasOffsetY} = document.getElementById('apex').getBoundingClientRect();
-        const {x: dotOffsetX, y: dotOffsetY} = event.target.getBoundingClientRect();
-
-        this.chartIconPosition.x = - canvasOffsetX + dotOffsetX - ICON_WIDTH / 2;
-        this.chartIconPosition.y = - canvasOffsetY + dotOffsetY - ICON_BOTTOM_OFFSET;
-
-        this.imageUrl = `https://picsum.photos/id/${currentState.dataPointIndex}/30/30`;
-        this.mainImageUrl = `https://picsum.photos/id/${currentState.dataPointIndex}/980/600`;
+        this.mainImageUrl = `https://picsum.photos/id/${currentState.dataPointIndex}/680/490`;
         this.tooltip = true;
       },
 
@@ -189,30 +178,30 @@
             const img = new Image();
 
             // тут должны быть нормальные пути
-            img.src = `https://picsum.photos/id/${i}/30/30`;
+            img.src = `https://picsum.photos/id/${i}/680/490`;
             this.imagesArray[i] = img;
         }
+      },
+
+      constructTooltip: ({w, dataPointIndex, series, seriesIndex}) => {
+        return  `
+                            <img style="width: 140px;" alt="" src="https://picsum.photos/id/${dataPointIndex}/680/490"/>
+                            <div style="width: 140px; white-space: normal; font-size: 12px; padding: 10px">
+                                <span>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</span>
+                                </div>
+                            <div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">
+                                <span class="apexcharts-tooltip-marker" style="background-color: rgb(0, 143, 251);"></span>
+                                <div class="apexcharts-tooltip-text" style="font-family: Helvetica, Arial, sans-serif; font-size: 12px;">
+                                    <div class="apexcharts-tooltip-y-group"><span class="apexcharts-tooltip-text-label">${w.globals.initialSeries[0].name}:</span>
+                                        <span class="apexcharts-tooltip-text-value">${series[seriesIndex][dataPointIndex]}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `
       }
     }
   }
 </script>
 
 <style scoped>
-    .point-image{
-        position: absolute;
-        box-shadow:
-                0 2px 2px 0 black,
-                0 0 0 3px #dfe2ee;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-    }
-
-    @media all and (max-width: 768px) {
-        .point-image{ display: none; }
-    }
-
-    @media (orientation: landscape) and (max-width: 1024px) {
-        .point-image{ display: none; }
-    }
 </style>
