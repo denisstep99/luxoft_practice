@@ -1,26 +1,28 @@
 <template>
-    <v-card>
-        <swiper :options="swiperOptionTop" class="gallery-top" ref="swiperTop">
-            <swiper-slide v-for="image in images" :key="image.link" class="slide-img">
-                <img :src="image.link" alt="">
-                <p class="slide-text">{{image.text}}</p>
-            </swiper-slide>
-        </swiper>
-        <swiper :options="swiperOptionThumbs" class="gallery-thumbs" ref="swiperThumbs">
-            <swiper-slide v-for="image in images" :key="image.link" class="slide-img">
-                <div class="wrap" @mouseover="image.isShown = true"
-                     @mouseleave="image.isShown = false">
-                    <img :src="image.link" alt="">
-                    <transition name="fade">
-                        <p class="slide-text" v-if="image.isShown" @mouseenter="image.isShown = true">{{image.text}}</p>
-                    </transition>
-                </div>
-
-            </swiper-slide>
-            <div class="swiper-button-next" slot="button-next"/>
-            <div class="swiper-button-prev" slot="button-prev"/>
-        </swiper>
-    </v-card>
+    <div style="height: 85vh">
+        <v-card>
+            <swiper :options="swiperOptionTop" class="gallery-top" ref="swiperTop">
+                <swiper-slide v-for="image in images" :key="image.link" class="slide-img"
+                              v-bind:style="{backgroundImage : `url('${image.link}')`}">
+                    <p class="slide-text">{{image.text}}</p>
+                </swiper-slide>
+            </swiper>
+            <swiper :options="swiperOptionThumbs" class="gallery-thumbs" ref="swiperThumbs">
+                <swiper-slide v-for="image in images" :key="image.link" class="slide-img"
+                              v-bind:style="{backgroundImage : `url('${image.link}')`}"
+                >
+                    <div class="slide-placeholder" @mouseenter="image.isShown = true"
+                         @mouseleave="image.isShown = false">
+                        <transition name="fade">
+                            <p class="slide-text" v-if="image.isShown">{{image.text}}</p>
+                        </transition>
+                    </div>
+                </swiper-slide>
+                <div class="swiper-button-next" slot="button-next"/>
+                <div class="swiper-button-prev" slot="button-prev"/>
+            </swiper>
+        </v-card>
+    </div>
 </template>
 <script> import {swiper} from "vue-awesome-swiper";
 
@@ -83,22 +85,32 @@ export default {
         hover: false,
         swiperOptionTop: {
             spaceBetween: 10,
-            autoHeight: true,
+            touchRatio: 0
         },
         swiperOptionThumbs: {
             spaceBetween: 10,
             slidesPerView: 5,
-            touchRatio: 0.3,
+            touchRatio: 0.5,
             centeredSlides: true,
             slideToClickedSlide: true,
-            navigation: {nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev'}
+            navigation: {nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev'},
+            breakpoints: {
+                1024: {
+                    slidesPerView: 4,
+                },
+                640: {
+                    slidesPerView: 3,
+                },
+                320: {
+                    slidesPerView: 2,
+                }
+            }
         }
     }),
     mounted() {
         this.$nextTick(() => {
             const swiperTop = this.$refs.swiperTop.swiper;
             const swiperThumbs = this.$refs.swiperThumbs.swiper;
-
             swiperTop.controller.control = swiperThumbs;
             swiperThumbs.controller.control = swiperTop;
 
@@ -107,12 +119,38 @@ export default {
     methods: {}
 } </script>
 <style lang="scss" scoped>
+    .v-card {
+        height: 100%;
+    }
+
     .swiper-container {
         background-color: #919191;
     }
 
+    .gallery-top {
+        height: calc(80% - 20px) !important;
+        width: 100%;
+        display: flex;
+        align-items: center;
+
+        .swiper-slide {
+            background-size: contain;
+            background-position: center;
+        }
+    }
+
+
     .gallery-thumbs {
+        height: calc(20% + 20px) !important;
+        box-sizing: border-box;
         padding: 10px 0;
+
+        .swiper-slide {
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0px 30px 40px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
     }
 
     .gallery-thumbs .swiper-slide {
@@ -123,11 +161,12 @@ export default {
 
     .gallery-thumbs .swiper-slide-active {
         opacity: 1;
+
     }
 
     img {
         width: inherit;
-        height: 100%;
+        height: inherit;
         padding: 0;
         margin: 0;
     }
@@ -153,6 +192,13 @@ export default {
         left: 50%;
         transform: translateX(-50%);
         font-size: 14px;
+        opacity: 1;
+        z-index: 999;
+    }
+
+    .slide-placeholder {
+        width: 100%;
+        height: 100%;
     }
 
     p {
