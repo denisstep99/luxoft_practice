@@ -3,15 +3,12 @@
         <div ref="chart" class="chart">
             <apexchart
                     id="apex"
-                    @dataPointMouseLeave="chartPointMouseLeave"
                     height="350"
                     type="line"
                     :options="chartOptions"
                     :series="series"
             />
-            <v-dialog
-                    v-model="dialog"
-            >
+            <v-dialog v-model="dialog">
                 <v-card
                         @click="dialog = false"
                         max-height="90vh"
@@ -19,29 +16,30 @@
                 >
                     <v-img
                             class="white--text align-end"
-                            :src="mainImageUrl"
+                            :src="globalData[currentElement].imgUrl"
                             contain
                             max-height="90vh"
                     >
-                        <v-card-title style="background-color: rgba(0, 0, 0, 0.38)">Top 10 Australian beaches</v-card-title>
-                        <v-card-text  style="background-color: rgba(0, 0, 0, 0.38)" class="text--primary">
-                            <div class="white--text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deleniti, eligendi!</div>
-
-                            <div class="white--text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid expedita ipsam molestias nostrum obcaecati officia pariatur quibusdam rem soluta voluptatem!</div>
+                        <v-card-title class="background--dark">{{globalData[currentElement].title}}</v-card-title>
+                        <v-card-text class="text--primary background--dark">
+                            <div class="white--text">{{globalData[currentElement].description}}</div>
                         </v-card-text>
                     </v-img>
+                    <div @click.stop="cardSwipe(currentElement => --currentElement)" class="arrow arrow--left"/>
+                    <div @click.stop="cardSwipe(currentElement => ++currentElement)" class="arrow  arrow--right"/>
                 </v-card>
             </v-dialog>
         </div>
 
         <v-data-table
+                single-select
                 v-model="selectedRows"
+                item-key="date"
+
                 :headers="headers"
                 :items="globalData"
-                item-key="date"
                 :sort-by="['date']"
                 :page.sync="page"
-                single-select
         >
             <template v-slot:item="{ item, isSelected, select, headers }">
                 <tr
@@ -63,7 +61,8 @@
 </template>
 
 <script>
-  import data from '../stabs/items';
+  import data from '../../stabs/items';
+  import CustomTooltip from "@/components/Chart/CustomTooltip";
 
   const X_AXIS = 'date';
 
@@ -81,13 +80,15 @@
 
 
     beforeMount() {
-      const hashDate = this.$route.hash.slice(1);
-      const page = this.globalData.findIndex(e => e.date === hashDate);
+      const DEFAULT_ITEMS_PER_PAGE = 10;
 
-      if (~page) {
-        this.page = Math.floor(page / 10 + 1);
+      const hashDate = this.$route.hash.slice(1);
+      const currentRow = this.globalData.findIndex(record => record.date === hashDate);
+
+      if (~currentRow) {
+        this.page = Math.floor(currentRow / DEFAULT_ITEMS_PER_PAGE + 1);
       }
-      this.selectedRows = this.globalData.filter(e => e.date === hashDate);
+      this.selectedRows = this.globalData.filter(record => record.date === hashDate);
 
       this.loadImages();
     },
@@ -95,7 +96,7 @@
 
     data() {
       return {
-        mainImageUrl: 'https://picsum.photos/id/0/680/490',
+        currentElement: 0,
         dialog: false,
         page: 1,
         imagesArray: [],
@@ -104,40 +105,36 @@
         series: [
           {
             name: this.type,
-            data: data.map(e => e[this.type])
+            data: data.map(record => record[this.type])
           }
         ],
         chartOptions: {
           chart: {
             toolbar: false,
             events: {
-              dataPointMouseEnter: this.chartPointMouseEnter
+              dataPointMouseEnter: this.chartPointMouseEnter,
+              dataPointMouseLeave: this.chartPointMouseLeave,
             },
           },
           xaxis: {
             type: "datetime",
-            categories: data.map(e => e[X_AXIS])
+            categories: data.map(record => record[X_AXIS])
           },
           markers: {
             size: 10,
-            onClick: (e) => {
+            onClick: (event) => {
               this.dialog = true;
-              e.stopPropagation()
+              event.stopPropagation();
             }
           },
           tooltip: {
             intersect: true,
             shared: false,
-            enabled: true,
-            custom: this.constructTooltip
+            custom: CustomTooltip.bind(this)
           }
         },
         headers: [
-          {
-            text: 'Дата',
-            align: 'left',
-            value: 'date'
-          },
+          {text: 'Дата', value: 'date'},
           {text: 'Температура', value: 'temperature'},
           {text: 'Влажность', value: 'humidity'},
           {text: 'Скорость ветра', value: 'speed'},
@@ -147,7 +144,7 @@
 
 
     beforeRouteEnter(to, from, next) {
-      if(!to.hash && location.hash) {
+      if (!to.hash && location.hash) {
         return next(to.fullPath + location.hash);
       }
       next();
@@ -165,7 +162,7 @@
       },
 
       chartPointMouseEnter(event, r, currentState) {
-        this.mainImageUrl = `https://picsum.photos/id/${currentState.dataPointIndex}/680/490`;
+        this.currentElement = currentState.dataPointIndex;
         this.tooltip = true;
       },
 
@@ -174,34 +171,64 @@
       },
 
       loadImages() {
-        for(let i = 0; i < 15; i++) {
-            const img = new Image();
-
-            // тут должны быть нормальные пути
-            img.src = `https://picsum.photos/id/${i}/680/490`;
-            this.imagesArray[i] = img;
-        }
+        this.globalData.forEach((record, index) => {
+          const img = new Image();
+          img.src = record.imgUrl;
+          this.imagesArray[index] = img;
+        });
       },
 
-      constructTooltip: ({w, dataPointIndex, series, seriesIndex}) => {
-        return  `
-                            <img style="width: 140px;" alt="" src="https://picsum.photos/id/${dataPointIndex}/680/490"/>
-                            <div style="width: 140px; white-space: normal; font-size: 12px; padding: 10px">
-                                <span>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</span>
-                                </div>
-                            <div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">
-                                <span class="apexcharts-tooltip-marker" style="background-color: rgb(0, 143, 251);"></span>
-                                <div class="apexcharts-tooltip-text" style="font-family: Helvetica, Arial, sans-serif; font-size: 12px;">
-                                    <div class="apexcharts-tooltip-y-group"><span class="apexcharts-tooltip-text-label">${w.globals.initialSeries[0].name}:</span>
-                                        <span class="apexcharts-tooltip-text-value">${series[seriesIndex][dataPointIndex]}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `
+      cardSwipe(incFunc) {
+        this.currentElement = (this.globalData.length + incFunc(this.currentElement)) % this.globalData.length;
       }
     }
   }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+    .background--dark {
+        background-color: rgba(0, 0, 0, 0.38);
+    }
+
+    .arrow{
+        height: 100%;
+        position: absolute;
+        top: 0;
+        width: 60px;
+
+        &::after {
+            display: block;
+            content: '';
+            height: 24px;
+            width: 24px;
+            position: absolute;
+            top: 50%;
+            transition-duration: .15s;
+            border: 4px solid rgba(255,255,255,0.4);
+            border-bottom: none;
+            border-left: none;
+        }
+
+        &:hover::after {
+            border-color: rgba(255,255,255,0.65);
+        }
+
+        &--right {
+            right: 0;
+        }
+
+        &--left {
+            left: 0;
+        }
+
+        &--right::after {
+            transform:  translateY(-12px) rotate(45deg);
+            right: 15px;
+        }
+
+        &--left::after{
+            transform:  translateY(-12px) rotate(-135deg);
+            left: 15px;
+        }
+    }
 </style>

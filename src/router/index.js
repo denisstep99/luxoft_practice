@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Chart from "@/components/Chart";
+import Chart from "@/components/Chart/Chart";
 import SliderWidget from "../components/SliderWidget";
 
 Vue.use(VueRouter);
