@@ -3,7 +3,7 @@
         <v-card>
             <swiper :options="swiperOptionTop" class="gallery-top" ref="swiperTop">
                 <swiper-slide v-for="image in images" :key="image.link" class="slide-img"
-                              v-bind:style="{backgroundImage : `url('${image.link}')`}">
+                              v-bind:style="{backgroundImage : `url('${image.link}') `}">
                     <p class="slide-text">{{image.text}}</p>
                 </swiper-slide>
             </swiper>
@@ -14,7 +14,7 @@
                     <div class="slide-placeholder" @mouseenter="image.isShown = true"
                          @mouseleave="image.isShown = false">
                         <transition name="fade">
-                            <p class="slide-text" v-if="image.isShown">{{image.text}}</p>
+                            <p class="slide-text" v-if="image.isShown && !isTouch">{{image.text}}</p>
                         </transition>
                     </div>
                 </swiper-slide>
@@ -82,7 +82,7 @@ export default {
                 isShown: false
             }
         ],
-        hover: false,
+        isTouch: null,
         swiperOptionTop: {
             spaceBetween: 10,
             touchRatio: 0
@@ -113,11 +113,22 @@ export default {
             const swiperThumbs = this.$refs.swiperThumbs.swiper;
             swiperTop.controller.control = swiperThumbs;
             swiperThumbs.controller.control = swiperTop;
-
+            this.isTouch = this.touchTest();
         });
+
     },
-    methods: {}
-} </script>
+    methods: {
+        touchTest() {
+            if ('ontouchstart' in window ||
+                window.DocumentTouch && document instanceof window.DocumentTouch ||
+                navigator.maxTouchPoints > 0 ||
+                window.navigator.msMaxTouchPoints > 0) {
+                return true;
+            }
+        }
+    }
+}
+</script>
 <style lang="scss" scoped>
     .v-card {
         height: 100%;
@@ -149,14 +160,14 @@ export default {
             background-size: cover;
             background-position: center;
             box-shadow: 0px 30px 40px rgba(0, 0, 0, 0.1);
-            z-index: 999;
+            z-index: 2;
         }
+        .swiper-slide-active{}
     }
 
     .gallery-thumbs .swiper-slide {
         width: 25%;
         height: 100%;
-        opacity: 0.4;
     }
 
     .gallery-thumbs .swiper-slide-active {
